@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>스킬투머니 실습실 · 6장</title>
+<style>
+  :root {
+    --navy-900: #0a1633;
+    --navy-800: #0f1f4a;
+    --navy-700: #16295e;
+    --navy-600: #243d85;
+    --gold: #f2c14e;
+    --muted: #b9c4e4;
+    --green: #1f9d55;
+    --red: #ff8a8a;
+
+    --code-fs: 14px;
+    --code-lh: 22px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #eef1f8;
+    color: #1b2336;
+    font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+    line-height: 1.6;
+    word-break: keep-all;
+    -webkit-text-size-adjust: 100%;
+  }
+  button { font: inherit; cursor: pointer; }
+  button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+  /* 제목 띠 */
+  .titleband { background: var(--navy-900); padding: 14px 20px; border-bottom: 3px solid var(--gold); }
+  .titleband h1 { margin: 0; color: var(--gold); font-size: 1.2rem; font-weight: 800; }
+
+  /* 화면 나누기: 넓은 화면은 왼쪽/오른쪽, 좁은 화면은 위/아래 */
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 1320px; margin: 0 auto; padding: 16px; align-items: start; }
+  @media (max-width: 860px) { .split { grid-template-columns: 1fr; } }
+  .pane { min-width: 0; background: #ffffff; border-radius: 14px; padding: 16px; box-shadow: 0 2px 10px rgba(20, 30, 70, 0.1); }
+  .pane > h2 { margin: 0 0 12px; font-size: 1.05rem; color: var(--navy-700); }
+
+  /* ───── 왼쪽: 웹앱 화면 (index.html과 같은 디자인) ───── */
+  .appframe { background: var(--navy-900); color: #ffffff; border-radius: 12px; padding: 4px 14px 22px; }
+  .appframe .hero { padding: 26px 0 18px; text-align: center; }
+  .appframe .brand { margin: 0; color: var(--gold); font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; }
+  .appframe .tagline { margin: 4px 0 0; color: var(--muted); font-size: 0.95rem; }
+  .card { background: var(--navy-700); border: 1px solid rgba(242, 193, 78, 0.28); border-radius: 18px; padding: 20px 18px; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35); }
+  .course-title { margin: 0; font-size: 1.3rem; line-height: 1.35; }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .tag { padding: 2px 11px; border-radius: 999px; border: 1px solid rgba(242, 193, 78, 0.55); background: rgba(242, 193, 78, 0.12); color: var(--gold); font-size: 0.8rem; font-weight: 700; }
+  .desc { margin: 14px 0 0; color: var(--muted); }
+  .info { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 16px 0 0; }
+  .info dt { color: var(--muted); }
+  .info dd { margin: 0; }
+  .fee { color: var(--gold); font-size: 1.2rem; }
+  .btn-reserve { width: 100%; min-height: 48px; margin-top: 18px; border: 0; border-radius: 10px; background: #ffffff; color: var(--navy-900); font-weight: 800; font-size: 1.02rem; }
+  .btn-reserve:hover { background: #e9eefc; }
+  .calc { margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.14); }
+  .calc h3 { margin: 0 0 10px; font-size: 0.95rem; color: var(--muted); font-weight: 700; }
+  .calc-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .calc-row label { font-weight: 700; }
+  .calc-row input { width: 88px; min-height: 44px; padding: 6px 10px; border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 8px; background: var(--navy-800); color: #ffffff; font-size: 1rem; text-align: center; }
+  .btn-calc { min-height: 44px; padding: 0 18px; border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 8px; background: var(--navy-600); color: #ffffff; font-weight: 700; }
+  .btn-calc:hover:not(:disabled) { background: #2f4ca0; }
+  .btn-calc:disabled { opacity: 0.55; cursor: wait; }
+  .result { margin-top: 14px; min-height: 1.6em; }
+  .result:empty::before { content: "결과가 여기에 표시됩니다"; color: rgba(185, 196, 228, 0.55); font-size: 0.92rem; }
+  .result div { min-height: 1.6em; overflow-wrap: anywhere; }
+
+  /* 예약 신청 상자 + 구글 시트 표 (6장) */
+  .appframe { padding-top: 18px; display: flex; flex-direction: column; gap: 16px; }
+  .reserve-box { background: var(--navy-700); border: 1px solid rgba(242, 193, 78, 0.28); border-radius: 16px; padding: 18px 16px; }
+  .box-title { margin: 0 0 12px; font-size: 1.1rem; line-height: 1.4; }
+  .reserve-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+  .reserve-grid .field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .reserve-grid .field label { font-weight: 700; font-size: 0.92rem; }
+  .reserve-grid .field input { width: 100%; min-height: 44px; padding: 6px 10px; border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 8px; background: var(--navy-800); color: #ffffff; font-size: 1rem; }
+  .reserve-grid .btn-calc { grid-column: 1 / -1; }
+  .sheet-box h3 { margin: 0 0 8px; font-size: 0.98rem; color: var(--muted); }
+  .table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid #c4c7c5; background: #ffffff; }
+  table.sheet { width: 100%; border-collapse: collapse; color: #1b2336; font-size: 0.85rem; white-space: nowrap; }
+  table.sheet th, table.sheet td { padding: 6px 10px; border: 1px solid #dadce0; text-align: left; }
+  table.sheet th { background: #f1f3f4; font-weight: 700; color: #3c4043; }
+  .sheet-empty { margin: 8px 0 0; color: rgba(185, 196, 228, 0.7); font-size: 0.88rem; }
+
+  /* ───── 오른쪽: 파이썬 코드 ───── */
+  .editor { display: flex; height: clamp(300px, 52vh, 480px); background: #0d1117; border: 1px solid #30363d; border-radius: 10px; overflow: hidden; }
+  .gutter {
+    flex: none; width: 46px; padding: 12px 10px 28px 0; overflow: hidden; text-align: right; user-select: none;
+    background: #0d1117; border-right: 1px solid #21262d; color: #6e7681;
+    font: var(--code-fs)/var(--code-lh) ui-monospace, SFMono-Regular, Menlo, Consolas, "D2Coding", "Courier New", monospace;
+  }
+  .gutter div { height: var(--code-lh); }
+  .gutter div.err { color: #ffa198; font-weight: 700; background: rgba(255, 123, 114, 0.18); }
+  .code {
+    flex: 1; min-width: 0; margin: 0; padding: 12px; border: 0; outline-offset: -3px; resize: none;
+    background: transparent; color: #e6edf3; caret-color: #ffffff;
+    font: var(--code-fs)/var(--code-lh) ui-monospace, SFMono-Regular, Menlo, Consolas, "D2Coding", "Courier New", monospace;
+    white-space: pre; overflow: auto; tab-size: 4;
+  }
+  @media (pointer: coarse) { :root { --code-fs: 16px; --code-lh: 24px; } }
+
+  .actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin-top: 12px; }
+  .btn { min-height: 44px; padding: 0 16px; border-radius: 10px; font-weight: 700; border: 1px solid var(--navy-700); }
+  .btn-primary { background: var(--navy-700); color: var(--gold); }
+  .btn-primary:hover:not(:disabled) { background: var(--navy-600); }
+  .btn-primary:disabled { opacity: 0.55; cursor: wait; }
+  .btn-ghost { background: #ffffff; color: var(--navy-700); }
+  .btn-ghost:hover { background: #eef1f8; }
+  .status { flex: 1 1 220px; min-width: 0; font-weight: 700; font-size: 0.95rem; }
+  .status .detail { display: block; margin-top: 2px; font-weight: 400; font-size: 0.88rem; }
+  .status.wait { color: #55607c; }
+  .status.ok { color: #17803f; }
+  .status.err { color: #c5221f; }
+  .status.warn { color: #b84a05; }
+  .dlmsg { margin-top: 8px; min-height: 1.5em; color: #17803f; font-weight: 700; font-size: 0.95rem; }
+</style>
+</head>
+<body>
+
+<header class="titleband"><h1>스킬투머니 실습실 · 6장</h1></header>
+
+<div class="split">
+
+  <!-- ───── 왼쪽: 웹앱 화면 ───── -->
+  <section class="pane" aria-labelledby="leftTitle">
+    <h2 id="leftTitle">웹앱 화면</h2>
+    <div class="appframe">
+      <section class="reserve-box" aria-labelledby="boxTitle">
+        <h2 class="box-title" id="boxTitle">예약 신청 · AI 자동화 (11월 7일)</h2>
+        <div class="reserve-grid">
+          <div class="field">
+            <label for="in1" id="lbl1" data-input-label>이름</label>
+            <input id="in1" type="text" value="김하늘" autocomplete="off" maxlength="50" data-input>
+          </div>
+          <div class="field">
+            <label for="in2" id="lbl2" data-input-label>인원</label>
+            <input id="in2" type="number" min="1" step="1" value="2" inputmode="numeric" data-input>
+          </div>
+          <button type="button" class="btn-calc" id="submitBtn" disabled>신청</button>
+        </div>
+        <div class="result" id="result" aria-live="polite"></div>
+      </section>
+
+      <section class="sheet-box" aria-labelledby="sheetTitle">
+        <h3 id="sheetTitle">구글 시트 · 예약</h3>
+        <div class="table-wrap">
+          <table class="sheet">
+            <thead><tr><th>날짜</th><th>강좌</th><th>이름</th><th>연락처</th><th>인원</th><th>결제 금액</th></tr></thead>
+            <tbody id="sheetBody"></tbody>
+          </table>
+        </div>
+        <p class="sheet-empty" id="sheetEmpty">아직 신청이 없습니다. [신청]을 누르면 행이 하나씩 쌓입니다.</p>
+      </section>
+    </div>
+  </section>
+
+  <!-- ───── 오른쪽: 파이썬 코드 ───── -->
+  <section class="pane" aria-labelledby="rightTitle">
+    <h2 id="rightTitle">이 웹앱을 움직이는 파이썬 코드</h2>
+
+    <div class="editor">
+      <div class="gutter" id="gutter" aria-hidden="true"></div>
+      <textarea class="code" id="code" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off" aria-label="파이썬 코드"></textarea>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn btn-primary" id="applyBtn" disabled>▶ 웹앱에 적용하기</button>
+      <span class="status wait" id="status" role="status" aria-live="polite">파이썬을 준비하고 있습니다...</span>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn btn-ghost" id="resetBtn">처음 코드로</button>
+      <button type="button" class="btn btn-ghost" id="downloadBtn">⬇ 코랩 노트북(.ipynb)으로 받기</button>
+    </div>
+    <div class="dlmsg" id="dlmsg" role="status" aria-live="polite"></div>
+  </section>
+
+</div>
+
+<!-- 파이썬을 브라우저 안에서 실행하는 Pyodide (인터넷 연결 필요) -->
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+<script>
+(() => {
+  "use strict";
+
+  /* ── 이 실습실의 설정 ── */
+  const INITIAL_CODE = `import json
+prices = {"AI 자동화": 35000, "숏폼 편집": 45000, "엑셀 실무": 30000}
+rsv = {"date": "2026-11-07", "course": "AI 자동화", "name": input("이름: "), "phone": "010-1111-2222", "people": int(input("인원: "))}
+rsv["total"] = prices[rsv["course"]] * rsv["people"]
+text = json.dumps(rsv, ensure_ascii=False)
+print("보내는 JSON:", text)
+
+data = json.loads(text)
+keys = ["date", "course", "name", "phone", "people", "total"]
+row = []
+for i in range(0, len(keys), 1):
+    row.append(data[keys[i]])
+print("시트에 추가되는 행:", row)`;
+  const NOTEBOOK_NAME = "ch06_lab.ipynb";
+  const NOTEBOOK_INTRO = "6장 실습실에서 고친 코드입니다. 셀을 실행하면 이름과 인원 입력 칸이 차례로 나타납니다";
+  const LINKED_VARS = ["row"];   // 웹앱 화면(구글 시트 표)과 이름으로 연결된 변수
+
+  const UNLINKED_MESSAGE =
+    "코드는 바르게 실행되었지만 왼쪽 웹앱에서 달라진 것이 없습니다. " +
+    "파이썬 문법이 틀린 것이 아니라, 이 실습실에서 그 부분이 웹앱과 연결되어 있지 않을 뿐입니다. " +
+    "[⬇ 코랩 노트북으로 받기]로 코드를 받아 코랩에서 실행해 결과를 확인해 보세요.";
+
+  /* 오류 종류별 쉬운 한국어 안내 (위에서부터 먼저 맞는 것을 사용) */
+  const ERROR_HELP = {
+    IndentationError: "들여쓰기 오류: 줄 앞의 빈칸 개수가 맞는지 확인하세요",
+    SyntaxError: "문법 오류: 괄호·따옴표·쉼표·콜론(:)이 빠졌거나 짝이 맞지 않는지 확인하세요",
+    NameError: "이름 오류: 변수 이름의 철자가 맞는지 확인하세요",
+    TypeError: "자료형 오류: 글자와 숫자를 섞어 계산하지 않았는지 확인하세요 (글자를 숫자로 바꾸려면 int( )를 쓰세요)",
+    ValueError: "값 오류: 숫자로 바꿀 수 없는 값이 들어가지 않았는지 확인하세요 (입력 칸이 비었거나 글자가 들어 있을 수 있어요)",
+    ZeroDivisionError: "나누기 오류: 0으로 나눌 수 없습니다. 나누는 수를 확인하세요",
+    IndexError: "번호 오류: 리스트에 없는 번호를 꺼내려 했습니다. 번호 범위를 확인하세요",
+    KeyError: "키 오류: 딕셔너리에 없는 이름(키)을 꺼내려 했습니다. 철자를 확인하세요",
+    AttributeError: "속성 오류: 그 값에 없는 기능을 쓰려 했습니다. 점(.) 뒤의 이름을 확인하세요",
+  };
+
+  /* ── 파이썬 쪽 도우미: input( )은 왼쪽 입력 칸 값을 돌려주고, print( ) 출력은 모아서 돌려줌 ── */
+  const HARNESS = String.raw`
+import ast, io, json, contextlib
+
+class _NoWebInput(BaseException):
+    pass
+
+def lab_names(src):
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return "[]"
+    names = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store) and node.id not in names:
+            names.append(node.id)
+    return json.dumps(names)
+
+def _user_line(e):
+    line = 0
+    tb = e.__traceback__
+    while tb is not None:
+        if tb.tb_frame.f_code.co_filename == "<lab>":
+            line = tb.tb_lineno
+        tb = tb.tb_next
+    return line
+
+def lab_run(src, inputs_json):
+    inputs = json.loads(inputs_json)
+    prompts = []
+
+    def web_input(prompt=""):
+        prompts.append(str(prompt))
+        n = len(prompts)
+        if n > len(inputs):
+            raise _NoWebInput(n)
+        return str(inputs[n - 1])
+
+    ns = {"__name__": "__main__", "input": web_input}
+    buf = io.StringIO()
+    res = {"status": "ok", "output": [], "prompts": prompts, "vars": {}, "unused": []}
+    tree = None
+    try:
+        tree = ast.parse(src, "<lab>")
+        code = compile(tree, "<lab>", "exec")
+        with contextlib.redirect_stdout(buf):
+            exec(code, ns)
+    except _NoWebInput as e:
+        res["status"] = "unlinked"
+        res["detail"] = str(e.args[0]) + "번째 input( )"
+    except ImportError as e:
+        res["status"] = "unlinked"
+        res["detail"] = "import " + str(getattr(e, "name", "") or "")
+    except BaseException as e:
+        res["status"] = "error"
+        res["etypes"] = [c.__name__ for c in type(e).__mro__]
+        res["line"] = (e.lineno or 0) if isinstance(e, SyntaxError) else _user_line(e)
+        res["msg"] = str(e)
+
+    if res["status"] == "ok":
+        res["output"] = buf.getvalue().splitlines()
+        values = {}
+        for k, v in ns.items():
+            if k.startswith("__") or k == "input":
+                continue
+            if isinstance(v, float) and (v != v or v in (float("inf"), float("-inf"))):
+                v = str(v)
+            if isinstance(v, (bool, int, float, str)):
+                values[k] = v
+            elif isinstance(v, (list, tuple)) and all(isinstance(x, (bool, int, float, str)) for x in v):
+                values[k] = [str(x) if isinstance(x, float) and (x != x or x in (float("inf"), float("-inf"))) else x for x in v]
+        res["vars"] = values
+        stores = []
+        loads = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Name):
+                if isinstance(node.ctx, ast.Store):
+                    stores.append(node.id)
+                elif isinstance(node.ctx, ast.Load):
+                    loads.add(node.id)
+        res["unused"] = [n for n in dict.fromkeys(stores) if n in ns and n not in loads]
+    return json.dumps(res, ensure_ascii=False)
+`;
+
+  /* ── 화면 요소 ── */
+  const $ = (id) => document.getElementById(id);
+  const codeEl = $("code"), gutter = $("gutter"), statusEl = $("status"), dlmsg = $("dlmsg");
+  const applyBtn = $("applyBtn"), submitBtn = $("submitBtn"), resultEl = $("result");
+  const sheetBody = $("sheetBody"), sheetEmpty = $("sheetEmpty");
+  const inputEls = [...document.querySelectorAll("[data-input]")];
+  const labelEls = [...document.querySelectorAll("[data-input-label]")];
+
+  let labRun = null, labNames = null;
+  let baseline = new Set();               // 처음 코드에 있는 변수 이름
+  let lastCode = INITIAL_CODE;            // 마지막으로 잘 실행된 코드
+  let controlCode = INITIAL_CODE;         // 그 바로 전 코드 (달라진 것이 있는지 비교용)
+  let errLine = 0;
+
+  /* ── 줄 번호 ── */
+  function renderGutter() {
+    const n = codeEl.value.split("\n").length;
+    const frag = document.createDocumentFragment();
+    for (let i = 1; i <= n; i++) {
+      const d = document.createElement("div");
+      d.textContent = i;
+      if (i === errLine) d.className = "err";
+      frag.append(d);
+    }
+    gutter.replaceChildren(frag);
+    gutter.scrollTop = codeEl.scrollTop;
+  }
+  codeEl.addEventListener("input", () => { errLine = 0; renderGutter(); });
+  codeEl.addEventListener("scroll", () => { gutter.scrollTop = codeEl.scrollTop; });
+  codeEl.addEventListener("keydown", (e) => {
+    if (e.key === "Tab" && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {   // Tab = 빈칸 4개
+      e.preventDefault();
+      codeEl.setRangeText("    ", codeEl.selectionStart, codeEl.selectionEnd, "end");
+      codeEl.dispatchEvent(new Event("input"));
+    } else if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {                      // Ctrl+Enter = 적용
+      e.preventDefault();
+      apply();
+    }
+  });
+
+  /* ── 안내 문구 ── */
+  function setStatus(kind, text, detail) {
+    statusEl.className = "status " + kind;
+    statusEl.textContent = text;
+    if (detail) {
+      const d = document.createElement("span");
+      d.className = "detail";
+      d.textContent = detail;
+      statusEl.append(d);
+    }
+  }
+  function showError(res) {
+    const key = res.etypes.find((t) => ERROR_HELP[t]);
+    const where = res.line > 0 ? res.line + "번째 줄 " : "";
+    const text = key ? ERROR_HELP[key] : "오류(" + res.etypes[0] + "): " + res.msg;
+    errLine = res.line;
+    renderGutter();
+    setStatus("err", where + text);
+  }
+  function showUnlinked(detail) {
+    setStatus("warn", UNLINKED_MESSAGE, detail);
+  }
+
+  /* ── 실행 ── */
+  const getInputs = () => inputEls.map((el) => el.value);
+  const runCode = (code, inputs) => JSON.parse(labRun(code, JSON.stringify(inputs)));
+  const signature = (res) => JSON.stringify([LINKED_VARS.map((v) => (v in res.vars ? res.vars[v] : null)), res.output, res.prompts]);
+  const cleanLabel = (p) => p.replace(/[\s:：]+$/, "").trim();
+
+  function render(res) {
+    res.prompts.forEach((p, i) => {            // input("이름: ") → 이름표 "이름"
+      const t = cleanLabel(p);
+      if (labelEls[i] && t) labelEls[i].textContent = t;
+    });
+    resultEl.replaceChildren(...res.output.map((text) => {   // print( ) 한 줄 = 결과 한 줄
+      const d = document.createElement("div");
+      d.textContent = text;
+      return d;
+    }));
+    // 코드의 row 리스트를 "구글 시트 · 예약" 표의 맨 아래에 한 행으로 추가 ([신청]을 누를 때마다 하나씩 쌓임)
+    const row = res.vars.row;
+    if (Array.isArray(row)) {
+      const tr = document.createElement("tr");
+      for (const cell of row) {
+        const td = document.createElement("td");
+        td.textContent = String(cell);
+        tr.append(td);
+      }
+      sheetBody.append(tr);
+      sheetEmpty.hidden = true;
+    }
+  }
+
+  function apply() {
+    if (!labRun) return;
+    dlmsg.textContent = "";
+    errLine = 0;
+    renderGutter();
+    const code = codeEl.value;
+    const inputs = getInputs();
+    const res = runCode(code, inputs);
+
+    if (res.status === "error") { showError(res); return; }         // 웹앱은 그대로 둔다
+    if (res.status === "unlinked") { showUnlinked(res.detail); return; }
+
+    if (code !== lastCode) { controlCode = lastCode; lastCode = code; }
+    render(res);
+
+    // 웹앱과 연결되지 않은 새 변수(예: tag = "주말반")만 늘고 화면은 그대로인지 확인
+    const extra = res.unused.filter((n) => !baseline.has(n) && !LINKED_VARS.includes(n));
+    if (extra.length) {
+      const before = runCode(controlCode, inputs);
+      if (before.status === "ok" && signature(before) === signature(res)) {
+        showUnlinked("바뀐 변수: " + extra.join(", "));
+        return;
+      }
+    }
+    setStatus("ok", "✔ 파이썬 코드가 웹앱에 적용되었습니다.");
+  }
+
+  /* ── 코랩 노트북 내려받기 ── */
+  function downloadNotebook() {
+    const lines = codeEl.value.split("\n").map((l, i, a) => (i < a.length - 1 ? l + "\n" : l));
+    const notebook = {
+      cells: [
+        { cell_type: "markdown", metadata: {}, source: [NOTEBOOK_INTRO] },
+        { cell_type: "code", metadata: {}, execution_count: null, outputs: [], source: lines },
+      ],
+      metadata: {
+        colab: { provenance: [] },
+        kernelspec: { name: "python3", display_name: "Python 3" },
+        language_info: { name: "python" },
+      },
+      nbformat: 4,
+      nbformat_minor: 0,
+    };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(notebook, null, 1)], { type: "application/json" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = NOTEBOOK_NAME;
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    dlmsg.textContent = "✔ " + NOTEBOOK_NAME + "를 내려받았습니다. 코랩 [파일] → [노트북 업로드]로 여세요.";
+  }
+
+  /* ── 버튼 연결 ── */
+  applyBtn.addEventListener("click", apply);
+  submitBtn.addEventListener("click", apply);
+  inputEls.forEach((el) => el.addEventListener("keydown", (e) => { if (e.key === "Enter") apply(); }));
+  $("resetBtn").addEventListener("click", () => {
+    codeEl.value = INITIAL_CODE;
+    errLine = 0;
+    renderGutter();
+    dlmsg.textContent = "";
+  });
+  $("downloadBtn").addEventListener("click", downloadNotebook);
+
+  codeEl.value = INITIAL_CODE;
+  renderGutter();
+
+  /* ── 파이썬 준비 ── */
+  (async () => {
+    try {
+      const pyodide = await loadPyodide();
+      pyodide.runPython(HARNESS);
+      labRun = pyodide.globals.get("lab_run");
+      labNames = pyodide.globals.get("lab_names");
+      baseline = new Set(JSON.parse(labNames(INITIAL_CODE)));
+      applyBtn.disabled = false;
+      submitBtn.disabled = false;
+      setStatus("", "");
+    } catch (err) {
+      console.error(err);
+      setStatus("err", "파이썬을 불러오지 못했습니다. 인터넷 연결을 확인하고 페이지를 새로 고침해 주세요.");
+    }
+  })();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+/* 스킬투머니 색상표 — 1장 소개 페이지와 같은 남색·금색
+   (static: 클래스로 쓰지 않아도 항상 CSS 변수로 내보냄) */
+@theme static {
+  --color-navy-900: #0a1633;
+  --color-navy-800: #0f1f4a;
+  --color-navy-700: #16295e;
+  --color-navy-600: #243d85;
+  --color-gold: #f2c14e;
+  --color-muted: #b9c4e4;
+}
+
+body {
+  background: var(--color-navy-900);
+  color: #ffffff;
+  font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+  word-break: keep-all;
+}
